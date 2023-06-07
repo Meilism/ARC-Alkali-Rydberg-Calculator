@@ -1,4 +1,5 @@
 *.pyc
+*.pyd
 *.DS_Store
 arc/build/
 *.ipynb_checkpoints/

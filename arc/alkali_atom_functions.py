@@ -408,6 +408,18 @@ class AlkaliAtom(object):
         """
         return (5.0 / 9.0) * self.getNumberDensity(temperature) ** (-1.0 / 3.0)
 
+    def getMostProbableSpeed(self, temperature):
+        """
+        Return the most probable speed under a given temperature
+
+        Args:
+            temperature (float): temperature (K) of the atomic vapour
+        
+        Returns:
+            float: most probable speed
+        """
+        return sqrt(C_k * temperature / self.mass)
+
     def corePotential(self, l, r):
         """core potential felt by valence electron
 
