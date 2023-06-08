@@ -410,7 +410,8 @@ class AlkaliAtom(object):
 
     def getMostProbableSpeed(self, temperature):
         """
-        Return the most probable speed under a given temperature
+        Return the most probable speed for a given temperature with
+        Maxwell-Boltzmann distribution.
 
         Args:
             temperature (float): temperature (K) of the atomic vapour
