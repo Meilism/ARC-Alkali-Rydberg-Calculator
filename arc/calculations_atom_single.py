@@ -3031,6 +3031,77 @@ class DynamicPolarizability:
                 " not recognised." % units
             )
 
+    def getReducedPolarizability(
+            self,
+            driveWavelength,
+            K=0,
+            units='SI',
+            accountForStateLifetime=False,
+            mj=None,
+    ):
+        
+        if accountForStateLifetime and len(self.lifetimes) == 0:
+            for state in self.basis:
+                self.lifetimes.append(
+                    self.atom.getStateLifetime(
+                        state[0], state[1], state[2], s=self.s
+                    )
+                )
+        
+        prefactor = (-1)**(K + self.j + 1) * sqrt(2*K + 1)
+
+        for i, state in enumerate(self.basis):
+            n1 = state[0]
+            l1 = state[1]
+            j1 = state[2]
+
+    
+    def getScalarPolarizability(
+        self,
+        driveWavelength,
+        units='SI',
+        accountForStateLifetime=False,
+        mj=None,
+    ):
+        r"""
+        Implement the method in Le Kien et al. The European Physical Journal D 
+        67 (2013): 1-16.
+
+        Args:
+            driveWavelength (float): wavelength of driving field
+                (in units of m)
+            units (string): optional, 'SI' or 'a.u.' (equivalently 'au'),
+                switches between SI units for returned result
+                (:math:`Hz V^{-2} m^2` )
+                and atomic units (":math:`a_0^3` "). Defaul 'SI'
+            accountForStateLifetime (bool): optional, should we account
+                for finite transition linewidths caused by finite state
+                lifetimes. By default False.
+
+        Returns:
+            scalar polarizabilities of the state specified. Returned units 
+            depend on `units` parameter (default SI).
+        """
+        pass
+
+    def getTensorPolarizability(
+        self,
+        driveWavelength,
+        units='SI',
+        accountForStateLifetime=False,
+        mj=None,
+    ):
+        pass
+
+    def getPolarizabilityNew(
+        self,
+        driveWavelength,
+        units="SI",
+        accountForStateLifetime=False,
+        mj=None,
+    ):
+        pass
+
     def plotPolarizability(
         self,
         wavelengthList,
