@@ -49,7 +49,7 @@ import pickle
 
 
 DPATH = os.path.join(os.path.expanduser("~"), ".arc-data")
-__arc_data_version__ = 10
+__arc_data_version__ = 11
 
 __all__ = [
     "AlkaliAtom",
@@ -2284,9 +2284,7 @@ class AlkaliAtom(object):
 
         if dl == 0:
             quadrupoleElement = (
-                (5.0 / 2.0)
-                * nu_c**4
-                * (1.0 - (3.0 * l_c**2) / (5 * nu_c**2))
+                (5.0 / 2.0) * nu_c**4 * (1.0 - (3.0 * l_c**2) / (5 * nu_c**2))
             )
             for p in range(0, 2, 1):
                 sm += gamma ** (2 * p) * q[2 * p]
@@ -2351,7 +2349,21 @@ class AlkaliAtom(object):
         return sph
 
     def getSphericalDipoleMatrixElement(self, j1, mj1, j2, mj2, q):
-        # Spherical Component of Angular Matrix Element in units of reduced matrix element <j||er||j'>
+        r"""Spherical Component of Angular Matrix Element
+
+        Args:
+            j1 (float): total orbital angular momentum of state 1
+            mj1 (float): projection of total orbital angular momentum of state 1
+            j2 (float): total orbital angular momentum of state 2
+            mj2 (float): projection of total orbital angular momentum of state 2
+            q (int): specifies transition that the driving field couples to,
+                from state 1 to state 2, with
+                +1, 0 or -1 corresponding to driving :math:`\sigma^+`,
+                :math:`\pi` and :math:`\sigma^-` transitions respectively.
+
+        Returns:
+            _type_: (units of reduced matrix element :math:`<j||er||j'>` )
+        """
         return (-1) ** (j1 - mj1) * Wigner3j(j1, 1, j2, -mj1, -q, mj2)
 
     def getSphericalMatrixElementHFStoFS(self, j1, f1, mf1, j2, mj2, q):
@@ -2614,7 +2626,7 @@ class AlkaliAtom(object):
         r"""
          Branching ratio for decay from :math:`\vert j_e,f_e,m_{f_e} \rangle \rightarrow \vert j_g,f_g,m_{f_g}\rangle`
 
-            :math:`b = \displaystyle\sum_q (2j_e+1)\left(\begin{matrix}f_1 & 1 & f_2 \\-m_{f1} & q & m_{f2}\end{matrix}\right)^2\vert \langle j_e,f_e\vert \vert er \vert\vert j_g,f_g\rangle\vert^2/|\langle j_e || er || j_g \rangle |^2`
+        :math:`b = \displaystyle\sum_q (2j_e+1)\left(\begin{matrix}f_1 & 1 & f_2 \\-m_{f1} & q & m_{f2}\end{matrix}\right)^2\vert \langle j_e,f_e\vert \vert er \vert\vert j_g,f_g\rangle\vert^2/|\langle j_e || er || j_g \rangle |^2`
 
         Args:
             jg, fg, mfg: total orbital, fine basis (total atomic) angular momentum,
@@ -2637,6 +2649,86 @@ class AlkaliAtom(object):
 
         # Rescale
         return b * (2.0 * je + 1.0)
+
+    def getBranchingRatioFStoHFS(self, jg, fg, mfg, je, mje, s=0.5):
+        r"""
+        Branching ratio for decay from :math:`\vert j_e, m_{j_e} \rangle \rightarrow \vert j_g,f_g,m_{f_g} \rangle`
+
+        Args:
+            jg (float): total orbital angular momentum of the lower energy state
+            fg (float): hyperfine basis (total atomic) angular momentum of the lower energy state
+            mfg (float): projection of the total angular momentum of the lower energy state
+            je (float): total orbital angular momentum of the higher energy state
+            mje (float): projection of the total orbital angular momentum of the higher energy state
+            s (float, optional): total spin angular momentum of the states.
+                By default 0.5 for Alkali atoms.
+
+        Returns:
+            float: branching ratio
+        """
+        UsedModulesARC.hyperfine = True
+
+        b = 0.0
+        for q in [-1, 0, 1]:
+            b += (
+                self.getSphericalMatrixElementHFStoFS(jg, fg, mfg, je, mje, -q)
+                ** 2
+            )
+
+        # rescale
+        return b * (2 * je + 1) / (2 * self.I + 1)
+
+    def getBranchingRatioHFStoFS(self, jg, mjg, je, fe, mfe, s=0.5):
+        r"""
+        Branching ratio for decay from :math:`\vert j_e,f_e,m_{f_e} \rangle \rightarrow \vert j_g,m_{j_g} \rangle`
+
+        Args:
+            jg (float): total orbital angular momentum of the lower energy state
+            mjg (float): projection of the total orbital angular momentum of the lower energy state
+            je (float): total orbital angular momentum of the higher energy state
+            fe (float): hyperfine basis (total atomic) angular momentum of the higher energy state
+            mfe (float): projection of the total angular momentum of the higher energy state
+            s (float, optional): total spin angular momentum of the states.
+                By default 0.5 for Alkali atoms.
+
+        Returns:
+            float: branching ratio
+        """
+        UsedModulesARC.hyperfine = True
+
+        b = 0.0
+        for q in [-1, 0, 1]:
+            b += (
+                self.getSphericalMatrixElementHFStoFS(je, fe, mfe, jg, mjg, -q)
+                ** 2
+            )
+
+        # rescale
+        return b * (2 * je + 1)
+
+    def getBranchingRatioFStoFS(self, jg, mjg, je, mje, s=0.5):
+        r"""
+        Branching ratio for decay from :math:`\vert j_e, m_{j_e} \rangle \rightarrow \vert j_g,m_{j_g} \rangle`
+
+        Args:
+            jg (float): total orbital angular momentum of the lower energy state
+            mjg (float): projection of the total orbital momentum of the lower energy state
+            je (float): total orbital angular momentum of the higher energy state
+            mje (float): projection of the total orbital angular momentum of the higher energy state
+            s (float, optional): total spin angular momentum of the states.
+                By default 0.5 for Alkali atoms.
+
+        Returns:
+            float: branching ratio
+        """
+
+        b = 0.0
+        for q in [-1, 0, 1]:
+            # only one of these can be non-zero
+            b += self.getSphericalDipoleMatrixElement(je, mje, jg, mjg, -q) ** 2
+
+        # rescale
+        return b * (2 * je + 1)
 
     def getSaturationIntensity(
         self, ng, lg, jg, fg, mfg, ne, le, je, fe, mfe, s=0.5
@@ -2990,9 +3082,17 @@ class AlkaliAtom(object):
         return OmegaR, ACg, ACr, Psc
 
     def _spinMatrices(self, j):
-        # SPINMATRICES Generates spin-matrices for spin S
-        #   [Sx,Sy,Sz]=SPINMATRICES(S) returns the Sx,Sy,Sz spin
-        #   matrices calculated using raising and lowering operators
+        """Generates spin-matrices for spin S
+
+        The Sx,Sy,Sz spin matrices calculated using raising and lowering
+        operators.
+
+        Args:
+            j (_type_): _description_
+
+        Returns:
+            array: [Sx,Sy,Sz]=SPINMATRICES(S)
+        """
         mj = -np.arange(-j + 1, j + 1)
         jm = np.sqrt(j * (j + 1) - mj * (mj + 1))
         Jplus = np.matrix(np.diag(jm, 1))  # Raising Operator
@@ -3005,13 +3105,17 @@ class AlkaliAtom(object):
 
     def breitRabi(self, n, l, j, B):
         r"""
-         Returns exact Zeeman energies math:`E_z` for states :math:`\vert F,m_f\rangle` in the :math:`\ell,j` manifold via exact diagonalisation of the Zeeman interaction :math:`\mathcal{H}_z` and the hyperfine interaction :math:`\mathcal{H}_\mathrm{hfs}` given by equations
+         Returns exact Zeeman energies math:`E_z` for states
+         :math:`\vert F,m_f\rangle` in the :math:`\ell,j` manifold via exact
+         diagonalisation of the Zeeman interaction :math:`\mathcal{H}_z` and
+         the hyperfine interaction :math:`\mathcal{H}_\mathrm{hfs}` given by
+         equations
 
-                :math:`\mathcal{H}_Z=\frac{\mu_B}{\hbar}(g_J J_z+g_I I_z)B_z`
+            :math:`\mathcal{H}_Z=\frac{\mu_B}{\hbar}(g_J J_z+g_I I_z)B_z`
 
-            and
+        and
 
-                :math:`\mathcal{H}_\mathrm{hfs}=A_\mathrm{hfs}I\cdot J + B_\mathrm{hfs}\frac{3(I\cdot J)^2+3/2 I\cdot J -I^2J^2}{2I(2I-1)2J(2J-1)}`.
+            :math:`\mathcal{H}_\mathrm{hfs}=A_\mathrm{hfs}I\cdot J + B_\mathrm{hfs}\frac{3(I\cdot J)^2+3/2 I\cdot J -I^2J^2}{2I(2I-1)2J(2J-1)}`.
 
         Args:
             n,l,j: principal,orbital, total orbital quantum numbers
@@ -3077,9 +3181,12 @@ class AlkaliAtom(object):
         mf = np.zeros(N)
         for ctr in range(N):
             f2 = eVec[:, ctr].conj().T * F2 * eVec[:, ctr]
-            f[ctr] = np.round(1 / 2 * (-1 + np.sqrt(1 + 4 * np.real(f2[0, 0]))))
+            f[ctr] = (
+                np.round(2 * 1 / 2 * (-1 + np.sqrt(1 + 4 * np.real(f2[0, 0]))))
+                / 2
+            )
             m = eVec[:, ctr].conj().T * Fz * eVec[:, ctr]
-            mf[ctr] = np.round(np.real(m[0, 0]))
+            mf[ctr] = np.round(2 * np.real(m[0, 0])) / 2
 
         return en, f, mf
 
@@ -3672,13 +3779,11 @@ class _EFieldCoupling:
                 angularPart = 0.0
                 if abs(l1 - l2 - 1) < 0.1:
                     angularPart = (
-                        (l1**2 - ml**2)
-                        / ((2.0 * l1 + 1.0) * (2.0 * l1 - 1.0))
+                        (l1**2 - ml**2) / ((2.0 * l1 + 1.0) * (2.0 * l1 - 1.0))
                     ) ** 0.5
                 elif abs(l1 - l2 + 1) < 0.1:
                     angularPart = (
-                        (l2**2 - ml**2)
-                        / ((2.0 * l2 + 1.0) * (2.0 * l2 - 1.0))
+                        (l2**2 - ml**2) / ((2.0 * l2 + 1.0) * (2.0 * l2 - 1.0))
                     ) ** 0.5
                 sumPart += (
                     CG(l1, ml, s, mj1 - ml, j1, mj1)
